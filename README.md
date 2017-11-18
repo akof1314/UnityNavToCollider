@@ -1,2 +1,13 @@
-# UnityNavToCollider
-Unity NavMesh To Collider
+# Unity NavMesh To Collider
+导航网格生成碰撞体
+
+## 原因
+在使用 Unity 导航网格进行点击行路的时候，需要提供碰撞体以让鼠标进行射线检测，来得到目的地的坐标点。但是，当遇到比较复杂的地面时，简单的 Box 碰撞体是不够贴合地面的，使用 Mesh 碰撞体又会更耗费资源，所以需要一种简单快速的铺设 Box 碰撞体方案。
+
+## 截图
+![](http://img.blog.csdn.net/20171118174901435)
+
+![](http://img.blog.csdn.net/20171118174921751)
+
+
+
