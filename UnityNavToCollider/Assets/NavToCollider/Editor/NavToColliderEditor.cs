@@ -9,7 +9,6 @@ public class NavToColliderEditor : Editor
 {
     private NavToCollider m_NavToCollider;
     private List<Vector3> m_SelectedVerts;
-    private List<Vector3> m_SelectedVerts2;
     private List<Collider> m_Colliders;
     private Collider m_SelectedCollider;
     private NavMeshTriangulation m_NavMeshTriangulation;
@@ -22,7 +21,6 @@ public class NavToColliderEditor : Editor
     {
         m_NavToCollider = target as NavToCollider;
         m_SelectedVerts = new List<Vector3>();
-        m_SelectedVerts2 = new List<Vector3>();
         m_RegionVerts = new List<Vector3>();
         m_Colliders = m_NavToCollider.GetComponentsInChildren<Collider>(true).ToList();
         m_NavMeshTriangulation = NavMesh.CalculateTriangulation();
@@ -59,14 +57,6 @@ public class NavToColliderEditor : Editor
         if (GUILayout.Button("Create Box from Selected Verticies[" + m_SelectedVerts.Count + "]"))
         {
             GenBoxCollider();
-        }
-        if (GUILayout.Button("Create xAxis"))
-        {
-            if (m_SelectedVerts.Count == 0)
-            {
-                m_SelectedVerts.AddRange(m_SelectedVerts2);
-            }
-            GenBoxCollider(true);
         }
         EditorGUILayout.EndHorizontal();
 
@@ -258,31 +248,14 @@ public class NavToColliderEditor : Editor
             vertList.Add(vertex);
         }
 
-        Vector3 min = new Vector3(Mathf.Infinity, Mathf.Infinity, Mathf.Infinity);
-        Vector3 max = new Vector3(-Mathf.Infinity, -Mathf.Infinity, -Mathf.Infinity);
-        foreach (var vertex in vertList)
-        {
-            min.x = Mathf.Min(vertex.x, min.x);
-            min.y = Mathf.Min(vertex.y, min.y);
-            min.z = Mathf.Min(vertex.z, min.z);
-
-            max.x = Mathf.Max(vertex.x, max.x);
-            max.y = Mathf.Max(vertex.y, max.y);
-            max.z = Mathf.Max(vertex.z, max.z);
-        }
-
-        if (xAxis)
-        {
-            max.x = min.x;
-        }
-        else
-        {
-            max.z = min.z;
-        }
-        Vector3 relativePos = max - min;
-        Quaternion rotation = Quaternion.LookRotation(relativePos, Vector3.up);
         Transform tf2 = go.transform;
-        tf2.rotation = rotation;
+        // 三点先构建一个平面
+        if (vertList.Count >= 3)
+        {
+            Plane plane = new Plane(vertList[0], vertList[1], vertList[2]);
+            Quaternion rotation = Quaternion.FromToRotation(tf2.up, -plane.normal) * tf2.rotation;
+            tf2.rotation = rotation;
+        }
 
         vertList.Clear();
         foreach (var vertex in m_SelectedVerts)
@@ -290,8 +263,8 @@ public class NavToColliderEditor : Editor
             vertList.Add(tf2.InverseTransformPoint(vertex));
         }
 
-        min = new Vector3(Mathf.Infinity, Mathf.Infinity, Mathf.Infinity);
-        max = new Vector3(-Mathf.Infinity, -Mathf.Infinity, -Mathf.Infinity);
+        Vector3 min = new Vector3(Mathf.Infinity, Mathf.Infinity, Mathf.Infinity);
+        Vector3 max = new Vector3(-Mathf.Infinity, -Mathf.Infinity, -Mathf.Infinity);
         foreach (var vertex in vertList)
         {
             min.x = Mathf.Min(vertex.x, min.x);
@@ -309,8 +282,6 @@ public class NavToColliderEditor : Editor
         bc.size = size;
         bc.center = center;
         m_Colliders.Add(bc);
-        m_SelectedVerts2.Clear();
-        m_SelectedVerts2.AddRange(m_SelectedVerts);
         m_SelectedVerts.Clear();
         go.layer = colliderLayer;
     }
